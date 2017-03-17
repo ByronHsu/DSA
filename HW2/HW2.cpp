@@ -5,13 +5,14 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <map>
+#include <ctime>
 using namespace std;
 
 struct Node{
 	string s;
 	vector<int> v;
 };
-int Find_index(string);
 void Get_data();
 int Count_words(string);
 bool replace(string&, const string&, const string&);
@@ -26,27 +27,27 @@ bool QM_expand(int);
 bool CM_expand(int);
 bool SM_expand(int);
 bool repeat_ans(int);
-bool nv_cmp(Node,Node);
-void Sort_nv();
-int Binary_Find_index(Node,int,int);
 
-
+clock_t t;
+map<string, int> Find_index;
+map<string, int>::iterator iter;
+string filename[4]={"2gm.small.txt","3gm.small.txt","4gm.small.txt","5gm.small.txt"};
 vector<Node> nv;
-string s[10000000];
-int L[10000000],qindex;
+string s[50000000];
+int L[50000000];
 vector<int> ans;
 vector<int> real_ans;
 vector<string> q;
 
 int main(){
 	Get_data();
-	//Sort_nv();
-	cout<<"DATASET DONE"<<endl;
+	cout<<nv.size()<<endl;
 	string Q;
 	while(getline(cin,Q)){
 		initialize();
 		Query_expand(Q);
 		Correct_answer();
+		cout<<"query: "<<Q<<endl;
 		Print_ans();
 	}
 }
@@ -63,7 +64,6 @@ void Query_expand(string Q){
 			j++;
 		}
 	}
-
 	size=q.size();
 	for(int i=0,j=0;i<size;i++){
 		if(CM_expand(j)){
@@ -72,7 +72,6 @@ void Query_expand(string Q){
 			j++;
 		}
 	}
-
 	size=q.size();
 	for(int i=0,j=0;i<size;i++){
 		if(SM_expand(j)){
@@ -81,9 +80,7 @@ void Query_expand(string Q){
 			j++;
 		}
 	}
-	//cout<<q.size()<<endl;
 	for(int i=0;i<q.size();i++){
-		//cout<<q[i]<<endl;
 		Find_in_database(q[i]);
 	}
 
@@ -267,16 +264,13 @@ void Find_in_database(string dq){
 	}
 	int nvindex[5],nindex[5]={0},nvsize=nv.size();
 	for(int i=0;i<5;i++){
-		/*
-		Node tem;
-		tem.s=words[i];
-		int f=Binary_Find_index(tem,0,nvsize-1);
-		*/
-		int f=Find_index(words[i]);
-		if(f==-1)
-			return;
+		int f;
+		iter=Find_index.find(words[i]);
+		if(iter != Find_index.end())
+		   f=iter->second;
 		else
-			nvindex[i]=f;
+		   f=-1;
+		nvindex[i]=f;
 	}
 
 	while(1){
@@ -307,60 +301,54 @@ bool repeat_ans(int a){
 	return 0;
 }
 void Get_data(){
- 	ifstream fin("test.txt");
- 
+
+	t = clock();
+
 	Node n;
 	n.s="0";
 	s[0]+="0";
 	for(int i=0;i<10000000;i++)
 		n.v.push_back(i);
 	nv.push_back(n);
-
+	Find_index.insert(pair<string,int>("0",0));
 	int index1=1;
-	while(getline (fin,s[index1],'	')){
-		//cout<<index1<<endl;
-		fin>>L[index1];
-	    stringstream ss(s[index1]);
-	    string sub_str;
-	    int index2=0;
-	    while(getline(ss,sub_str,' ')){
-			int f=Find_index(sub_str);
-			if(f==-1){
-				Node n;
-				n.s=sub_str;
-				n.v.push_back(index1);
-				nv.push_back(n);
-			}else{
-				if(nv[f].v[ nv[f].v.size()-1 ]!=index1)	
-					nv[f].v.push_back(index1);
-			}
-			index2++;
-	    }
-	    /*
-		for(int i=0;i<nv.size();i++){
-			cout<<nv[i].s;
-			for(int j=0;j<nv[i].v.size();j++){
-				cout<<"(";
-				cout<<nv[i].v[j];
-				cout<<") ";
-			}
-			cout<<endl;
-		}
-		*/
-		index1++;
-		fin.get();	 //fin
- 	//cin
-    }
 
-}
-int Find_index(string x){
-	for(int i=0;i<nv.size();i++){
-		if(nv[i].s==x){
-			return i;
-		}
+	for(int ll=0;ll<4;ll++){
+		ifstream fin(filename[ll]);
+		while(getline (fin,s[index1],'	')){
+			//cout<<index1<<endl;
+			fin>>L[index1];
+		    stringstream ss(s[index1]);
+		    string sub_str;
+		    while(getline(ss,sub_str,' ')){
+				int f;
+				iter=Find_index.find(sub_str);
+				if(iter != Find_index.end())
+				   f=iter->second;
+				else
+				   f=-1;
+
+				if(f==-1){
+					Node n;
+					n.s=sub_str;
+					n.v.push_back(index1);
+					nv.push_back(n);				
+					Find_index.insert(pair<string,int>(sub_str,nv.size()-1));
+
+				}else{
+					if(nv[f].v[ nv[f].v.size()-1 ]!=index1)	
+						nv[f].v.push_back(index1);
+				}
+		    }
+			index1++;
+			fin.get();
+	    }
+		t = clock() - t;
+		printf ("%f seconds.\n",t,((float)t)/CLOCKS_PER_SEC);
 	}
-	return -1;
+	cout<<index1<<endl;
 }
+
 int Count_words(string c){
 	int count=1;
 	for(int i=0;i<c.length();i++){
@@ -377,49 +365,19 @@ bool replace(std::string& str, const std::string& from, const std::string& to) {
     return true;
 }
 void initialize(){
-	qindex=0;
 	ans.clear();
 	real_ans.clear();
 	q.clear();	
 }
 void Print_ans(){
 	sort(real_ans.begin(),real_ans.end(),cmp);
-	if(real_ans.size()==0){
-		cout<<"Can't Find Corresponding Result."<<endl;
-	}
-	for(int i=0;i<real_ans.size();i++)
+	int rsize=real_ans.size();
+	if(rsize>5)
+		rsize=5;
+	cout<<"output: "<<rsize<<endl;
+	for(int i=0;i<rsize;i++)
 		cout<<s[real_ans[i]]<<"	"<<L[real_ans[i]]<<endl;	
 }
 bool cmp(int a,int b){
 	return L[a]>L[b];
-}
-void Sort_nv(){
-	sort(nv.begin(),nv.end(),nv_cmp);
-}
-bool nv_cmp(Node N1,Node N2){
-	string s1=N1.s,s2=N2.s;
-	int l1=s1.length(),l2=s2.length();
-	int l=min(l1,l2);
-	for(int i=0;i<l;i++){
-		if(s1[i]<s2[i])
-			return true;
-		if(s1[i]>s2[i])
-			return false;
-	}
-	if(l1<l2)
-		return true;
-	if(l1>l2)
-		return false;
-
-}
-int Binary_Find_index(Node key, int left, int right){
-    if (left > right)
-        return -1;     
-    int mid = left + (right-left)/2;
-    if (nv_cmp(key,nv[mid])) //key<mid
-        return Binary_Find_index(key, left, mid - 1);
-    else if (nv_cmp(nv[mid],key))
-        return Binary_Find_index(key, mid + 1, right);
-    else
-        return mid;
 }
