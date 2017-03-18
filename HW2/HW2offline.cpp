@@ -6,31 +6,32 @@
 #include <fstream>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 #include <ctime>
 using namespace std;
-
+//./a.out /tmp2/dsa2017_hw02/ < input0100.txt
 struct Node{
 	string s;
 	vector<int> v;
 };
-void Get_data();
-int Count_words(string);
-bool replace(string&, const string&, const string&);
-void Find_in_database(string);
-void Correct_answer();
-bool Compare_string(string,string);
-void Print_ans();
-void initialize();
-bool cmp(int,int);
-void Query_expand(string);
-bool QM_expand(int);
-bool CM_expand(int);
-bool SM_expand(int);
-bool repeat_ans(int);
+inline void Get_data(string);
+inline int Count_words(string);
+inline bool replace(string&, const string&, const string&);
+inline void Find_in_database(string);
+inline void Correct_answer(int);
+inline bool Compare_string(string,string);
+inline void Print_ans();
+inline void initialize();
+inline bool cmp(int,int);
+inline void Query_expand(string);
+inline bool QM_expand(int);
+inline bool CM_expand(int);
+inline bool SM_expand(int);
+inline bool repeat_ans(int);
 
 clock_t t;
-map<string, int> Find_index;
-map<string, int>::iterator iter;
+unordered_map<string, int> Find_index;
+unordered_map<string, int>::iterator iter;
 string filename[4]={"2gm.small.txt","3gm.small.txt","4gm.small.txt","5gm.small.txt"};
 vector<Node> nv;
 string s[50000000];
@@ -39,19 +40,18 @@ vector<int> ans;
 vector<int> real_ans;
 vector<string> q;
 
-int main(){
-	Get_data();
+int main(int argc, char** argv){
+	Get_data(argv[1]);
 	//cout<<nv.size()<<endl;
 	string Q;
 	while(getline(cin,Q)){
 		initialize();
 		Query_expand(Q);
-		Correct_answer();
 		cout<<"query: "<<Q<<endl;
 		Print_ans();
 	}
 	t = clock() - t;
-	//printf ("%f seconds.\n",t,((float)t)/CLOCKS_PER_SEC);
+	printf ("%f seconds.\n",t,((float)t)/CLOCKS_PER_SEC);
 }
 
 
@@ -201,7 +201,8 @@ bool QM_expand(int qindex){
 			}
 			str=nowstr;
 			replace(str,tem,"");
-			str.erase(str.begin()+i);
+			if(i<str.length())
+				str.erase(str.begin()+i);
 			if(str[str.length()-1]==' '){
 				str.erase(str.begin()+(str.length()-1));
 			}
@@ -243,12 +244,33 @@ bool Compare_string(string s1,string s2){
 		return true;
 	}
 }
-void Correct_answer(){
-	for(int i=0;i<ans.size();i++){
-		for(int j=0;j<q.size();j++){
-			if(Compare_string(s[ans[i]],q[j]))
-				real_ans.push_back(ans[i]);
+void Correct_answer(int stridx){
+	int rsize=real_ans.size();//rsize<=5
+
+	bool isrealans=0;
+	for(int i=0;i<q.size();i++){
+		if(Compare_string(s[stridx],q[i]))
+			isrealans=1;
+	}
+	if(!isrealans)
+		return;
+	else{
+		if(rsize==0){
+			real_ans.push_back(stridx);
+			return;
 		}
+		for(int i=0;i<rsize;i++){
+			if(L[stridx]>L[real_ans[i]]){
+				real_ans.insert(real_ans.begin()+i,stridx);
+				if(real_ans.size()>5)
+					real_ans.erase(real_ans.end()-1);
+				return;
+			}
+		}
+		if(rsize<5){
+			real_ans.push_back(stridx);
+		}
+		//sort(real_ans.begin(),real_ans.end(),cmp);
 	}
 }
 
@@ -291,18 +313,18 @@ void Find_in_database(string dq){
 				  &&nv[nvindex[3]].v[nindex[3]]==nv[nvindex[4]].v[nindex[4]]
 				   &&Count_words(s[nv[nvindex[0]].v[nindex[0]]])==Count_words(dq)
 				    &&!repeat_ans(nv[nvindex[0]].v[nindex[0]]))
-						{ans.push_back(nv[nvindex[0]].v[nindex[0]]);}
+						{Correct_answer(nv[nvindex[0]].v[nindex[0]]);}
 
 	}
 }
 bool repeat_ans(int a){
-	for(int i=0;i<ans.size();i++)
-		if(a==ans[i]){
+	for(int i=0;i<real_ans.size();i++)
+		if(a==real_ans[i]){
 			return 1;
 		}
 	return 0;
 }
-void Get_data(){
+void Get_data(string path){
 
 	t = clock();
 
@@ -317,7 +339,8 @@ void Get_data(){
 
 	for(int ll=0;ll<4;ll++){
 		//cout<<filename[ll]<<endl;
-		ifstream fin(filename[ll]);
+		string tmp = path + filename[ll];
+		ifstream fin(tmp);
 		while(getline (fin,s[index1],'	')){
 			//cout<<index1<<endl;
 			fin>>L[index1];
@@ -373,7 +396,6 @@ void initialize(){
 	q.clear();	
 }
 void Print_ans(){
-	sort(real_ans.begin(),real_ans.end(),cmp);
 	int rsize=real_ans.size();
 	if(rsize>5)
 		rsize=5;
