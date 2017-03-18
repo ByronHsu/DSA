@@ -28,6 +28,7 @@ inline bool QM_expand(int);
 inline bool CM_expand(int);
 inline bool SM_expand(int);
 inline bool repeat_ans(int);
+inline void Find_fq(string);
 
 clock_t t;
 unordered_map<string, int> Find_index;
@@ -39,6 +40,7 @@ long long int L[50000000];
 vector<int> ans;
 vector<int> real_ans;
 vector<string> q;
+string fq;
 
 int main(int argc, char** argv){
 	Get_data(argv[1]);
@@ -47,7 +49,7 @@ int main(int argc, char** argv){
 	while(getline(cin,Q)){
 		initialize();
 		Query_expand(Q);
-		cout<<"query: "<<Q<<endl;
+		printf("query: %s\n",Q.c_str());
 		Print_ans();
 	}
 	t = clock() - t;
@@ -57,6 +59,8 @@ int main(int argc, char** argv){
 
 void Query_expand(string Q){
 	q.push_back(Q);
+	Find_fq(Q);
+	//cout<<fq<<endl;
 	int size;
 	size=q.size();
 	for(int i=0,j=0;i<size;i++){
@@ -82,12 +86,139 @@ void Query_expand(string Q){
 			j++;
 		}
 	}
-	for(int i=0;i<q.size();i++){
-		Find_in_database(q[i]);
-	}
-
+	Find_in_database(fq);
 }
+void Find_in_database(string dq){
+	stringstream ss(dq);
+	string words[5];
+	for(int i=0;i<5;i++)
+		words[i]+="0";
+	string str;
+	int index=0;
+	while(getline(ss,str,' ')){
+		if(str!="_"){
+			words[index++]=str;
+		}
+	}
+	int nvindex[5],nindex[5]={0},nvsize=nv.size();
+	for(int i=0;i<5;i++){
+		int f;
+		iter=Find_index.find(words[i]);
+		if(iter != Find_index.end())
+		   f=iter->second;
+		else
+		   return;
+		nvindex[i]=f;
+	}
+	int cnt=0;
+	while(1){
+		cnt++;
+		int min_nvindex_num=0;
+		for(int i=1;i<5;i++)
+			if(nv[ nvindex[i] ].v[ nindex[i] ]<nv[ nvindex[min_nvindex_num] ].v[ nindex[ min_nvindex_num ] ])
+				min_nvindex_num=i;
+			if(nindex[ min_nvindex_num ]+1 >= nv[ nvindex[min_nvindex_num] ].v.size())
+				break;
+			else
+				nindex[ min_nvindex_num ] += 1;
 
+			if(nv[nvindex[0]].v[nindex[0]]==nv[nvindex[1]].v[nindex[1]]
+				&&nv[nvindex[1]].v[nindex[1]]==nv[nvindex[2]].v[nindex[2]]
+				 &&nv[nvindex[2]].v[nindex[2]]==nv[nvindex[3]].v[nindex[3]]
+				  &&nv[nvindex[3]].v[nindex[3]]==nv[nvindex[4]].v[nindex[4]])
+					{Correct_answer(nv[nvindex[0]].v[nindex[0]]);}
+	}
+	//cout<<cnt<<endl;
+}
+void Find_fq(string Q){
+	fq=Q;
+	string nowstr,str;
+	for(int k=0;k<5;k++){
+	nowstr=fq;
+	for(int i=0;i<nowstr.length();i++){
+		if(nowstr[i]=='?'){
+			string tem;
+			tem+='?';
+			for(int j=i+1;j<nowstr.length();j++){
+				if(nowstr[j]==' ')
+					break;
+				else{
+					tem+=nowstr[j];
+				}
+			}
+			str=nowstr;
+			replace(str,tem,"");
+			if(i<str.length())
+				str.erase(str.begin()+i);
+			if(str[str.length()-1]==' '){
+				str.erase(str.begin()+(str.length()-1));
+			}
+			fq=str;
+		}
+	}
+	}
+	
+	for(int k=0;k<5;k++){
+	nowstr=fq;
+	for(int i=0;i<nowstr.length();i++){
+		if(nowstr[i]=='/'){
+			int left,right;
+			for(int j=i;j>=0;j--){
+				if(j==0){
+					left=0;break;
+				}
+				if(nowstr[j]==' '){
+					left=j+1;break;
+				}
+			}
+			for(int j=i;j<nowstr.length();j++){
+				if(j==nowstr.length()-1){
+					right=nowstr.length()-1;break;
+				}
+				if(nowstr[j]==' '){
+					right=j-1;break;
+				}
+			}
+			string merge;
+			for(int j=left;j<=right;j++)
+				merge+=nowstr[j];
+
+			if(right==nowstr.length()-1){
+				str=nowstr;
+				replace(str,merge,"");
+				str.erase(str.begin()+left-1);
+				fq=str;					
+			}
+			else{
+				str=nowstr;
+				replace(str,merge,"");
+				str.erase(str.begin()+left);
+				fq=str;		
+			}			
+		}
+	}
+	}
+	
+	for(int k=0;k<5;k++){
+	nowstr=fq;
+	for(int i=0;i<nowstr.length();i++){
+		if(nowstr[i]=='*'){
+			if(i==nowstr.length()-1){
+				str=nowstr;
+				replace(str,"*","");
+				str.erase(str.begin()+i-1);
+				fq=str;					
+			}
+			else{
+				str=nowstr;
+				replace(str,"*","");
+				str.erase(str.begin()+i);
+				fq=str;		
+			}	
+		}	
+	}
+	}
+}
 bool SM_expand(int qindex){
 	string underline[5]={"","_","_ _","_ _ _","_ _ _ _"};
 	string nowstr=q[qindex];
@@ -274,49 +405,6 @@ void Correct_answer(int stridx){
 	}
 }
 
-void Find_in_database(string dq){
-	stringstream ss(dq);
-	string words[5];
-	for(int i=0;i<5;i++)
-		words[i]+="0";
-	string str;
-	int index=0;
-	while(getline(ss,str,' ')){
-		if(str!="_"){
-			words[index++]=str;
-		}
-	}
-	int nvindex[5],nindex[5]={0},nvsize=nv.size();
-	for(int i=0;i<5;i++){
-		int f;
-		iter=Find_index.find(words[i]);
-		if(iter != Find_index.end())
-		   f=iter->second;
-		else
-		   f=-1;
-		nvindex[i]=f;
-	}
-
-	while(1){
-		int min_nvindex_num=0;
-		for(int i=1;i<5;i++)
-			if(nv[ nvindex[i] ].v[ nindex[i] ]<nv[ nvindex[min_nvindex_num] ].v[ nindex[ min_nvindex_num ] ])
-				min_nvindex_num=i;
-			if(nindex[ min_nvindex_num ]+1 >= nv[ nvindex[min_nvindex_num] ].v.size())
-				break;
-			else
-				nindex[ min_nvindex_num ] += 1;
-
-			if(nv[nvindex[0]].v[nindex[0]]==nv[nvindex[1]].v[nindex[1]]
-				&&nv[nvindex[1]].v[nindex[1]]==nv[nvindex[2]].v[nindex[2]]
-				 &&nv[nvindex[2]].v[nindex[2]]==nv[nvindex[3]].v[nindex[3]]
-				  &&nv[nvindex[3]].v[nindex[3]]==nv[nvindex[4]].v[nindex[4]]
-				   &&Count_words(s[nv[nvindex[0]].v[nindex[0]]])==Count_words(dq)
-				    &&!repeat_ans(nv[nvindex[0]].v[nindex[0]]))
-						{Correct_answer(nv[nvindex[0]].v[nindex[0]]);}
-
-	}
-}
 bool repeat_ans(int a){
 	for(int i=0;i<real_ans.size();i++)
 		if(a==real_ans[i]){
@@ -399,9 +487,9 @@ void Print_ans(){
 	int rsize=real_ans.size();
 	if(rsize>5)
 		rsize=5;
-	cout<<"output: "<<rsize<<endl;
+	printf("output: %d\n",rsize);
 	for(int i=0;i<rsize;i++)
-		cout<<s[real_ans[i]]<<"	"<<L[real_ans[i]]<<endl;	
+		printf("%s\t%d\n",s[real_ans[i]].c_str(),L[real_ans[i]]);	
 }
 bool cmp(int a,int b){
 	return L[a]>L[b];
