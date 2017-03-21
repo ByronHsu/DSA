@@ -14,6 +14,10 @@ struct Node{
 	string s;
 	vector<int> v;
 };
+struct Input{
+	string s;
+	long long int L;
+};
 inline void Get_data(string);
 inline int Count_words(string);
 inline bool replace(string&, const string&, const string&);
@@ -22,7 +26,7 @@ inline void Correct_answer(int);
 inline bool Compare_string(string,string);
 inline void Print_ans();
 inline void initialize();
-inline bool cmp(int,int);
+inline bool cmp(Input,Input);
 inline void Query_expand(string);
 inline bool QM_expand(int);
 inline bool CM_expand(int);
@@ -35,16 +39,15 @@ unordered_map<string, int> Find_index;
 unordered_map<string, int>::iterator iter;
 string filename[4]={"2gm.small.txt","3gm.small.txt","4gm.small.txt","5gm.small.txt"};
 vector<Node> nv;
-string s[50000000];
-long long int L[50000000];
+Input I[50000000];
 vector<int> ans;
 vector<int> real_ans;
 vector<string> q;
 string fq;
+int nowans;
 
 int main(int argc, char** argv){
 	Get_data(argv[1]);
-	//cout<<nv.size()<<endl;
 	string Q;
 	while(getline(cin,Q)){
 		initialize();
@@ -53,14 +56,13 @@ int main(int argc, char** argv){
 		Print_ans();
 	}
 	t = clock() - t;
-	//printf ("%f seconds.\n",t,((float)t)/CLOCKS_PER_SEC);
+	printf ("%f seconds.\n",((float)t)/CLOCKS_PER_SEC);
 }
 
 
 void Query_expand(string Q){
 	q.push_back(Q);
 	Find_fq(Q);
-	//cout<<fq<<endl;
 	int size;
 	size=q.size();
 	for(int i=0,j=0;i<size;i++){
@@ -86,8 +88,8 @@ void Query_expand(string Q){
 			j++;
 		}
 	}
-
-	Find_in_database(fq);
+	for(int i=0;i<q.size();i++)
+		Find_in_database(q[i]);
 }
 void Find_in_database(string dq){
 	stringstream ss(dq);
@@ -116,8 +118,10 @@ void Find_in_database(string dq){
 		if(f!=0)
 			cnt_words++;
 	}
+	clock_t now,after;
+	now=clock();
 
-
+	nowans=0;
 	while(1){
 		int min_nvindex_num=0;
 
@@ -132,13 +136,16 @@ void Find_in_database(string dq){
 				thesame=0;
 		}
 
-		if(thesame)
+		if(thesame&&!repeat_ans(nv[nvindex[0]].v[nindex[0]]))
 			Correct_answer(nv[nvindex[0]].v[nindex[0]]);
 
 		if(nindex[ min_nvindex_num ]+1 >= nv[ nvindex[min_nvindex_num] ].v.size())
 			break;
 		else
 			nindex[ min_nvindex_num ] += 1;
+
+		if(nowans>=5)
+			break;
 	}
 	
 }
@@ -198,7 +205,8 @@ void Find_fq(string Q){
 			if(right==nowstr.length()-1){
 				str=nowstr;
 				replace(str,merge,"");
-				str.erase(str.begin()+left-1);
+				if(left-1>=0)
+					str.erase(str.begin()+left-1);
 				fq=str;					
 			}
 			else{
@@ -392,8 +400,9 @@ void Correct_answer(int stridx){
 
 	bool isrealans=0;
 	for(int i=0;i<q.size();i++){
-		if(Compare_string(s[stridx],q[i])){
+		if(Compare_string(I[stridx].s,q[i])){
 			isrealans=1;
+			nowans++;
 		}
 	}
 	if(!isrealans)
@@ -404,7 +413,7 @@ void Correct_answer(int stridx){
 			return;
 		}
 		for(int i=0;i<rsize;i++){
-			if(L[stridx]>L[real_ans[i]]){
+			if(I[stridx].L>I[real_ans[i]].L){
 				real_ans.insert(real_ans.begin()+i,stridx);
 				if(real_ans.size()>5)
 					real_ans.erase(real_ans.end()-1);
@@ -427,53 +436,54 @@ bool repeat_ans(int a){
 }
 void Get_data(string path){
 
-	t = clock();
+	int index1=0;
+	for(int ll=0;ll<4;ll++){
+		string tmp = path + filename[ll];
+		ifstream fin(tmp);
+		while(getline (fin,I[index1].s,'	')){
+			fin>>I[index1].L;
+			index1++;
+			fin.get();
+	    }
+	}
+
+	sort(I,I+index1,cmp);
 
 	Node n;
 	n.s="0";
-	s[0]+="0";
 	for(int i=0;i<50000000;i++)
 		n.v.push_back(i);
 	nv.push_back(n);
 	Find_index.insert(pair<string,int>("0",0));
-	int index1=1;
 
-	for(int ll=0;ll<4;ll++){
-		//cout<<filename[ll]<<endl;
-		string tmp = path + filename[ll];
-		ifstream fin(tmp);
-		while(getline (fin,s[index1],'	')){
-			//cout<<index1<<endl;
-			fin>>L[index1];
-		    stringstream ss(s[index1]);
-		    string sub_str;
-		    while(getline(ss,sub_str,' ')){
-				int f;
-				iter=Find_index.find(sub_str);
-				if(iter != Find_index.end())
-				   f=iter->second;
-				else
-				   f=-1;
 
-				if(f==-1){
-					Node n;
-					n.s=sub_str;
-					n.v.push_back(index1);
-					nv.push_back(n);				
-					Find_index.insert(pair<string,int>(sub_str,nv.size()-1));
+	for(int i=0;i<index1;i++){
+	    stringstream ss(I[i].s);
+	    string sub_str;
+	    while(getline(ss,sub_str,' ')){
+			int f;
+			iter=Find_index.find(sub_str);
+			if(iter != Find_index.end())
+			   f=iter->second;
+			else
+			   f=-1;
 
-				}else{
-					if(nv[f].v[ nv[f].v.size()-1 ]!=index1)	
-						nv[f].v.push_back(index1);
-				}
-		    }
-			index1++;
-			fin.get();
+			if(f==-1){
+				Node n;
+				n.s=sub_str;
+				n.v.push_back(i);
+				nv.push_back(n);				
+				Find_index.insert(pair<string,int>(sub_str,nv.size()-1));
+
+			}else{
+				if(nv[f].v[ nv[f].v.size()-1 ]!=i)	
+					nv[f].v.push_back(i);
+			}
 	    }
-		t = clock() - t;
-		//printf ("%f seconds.\n",t,((float)t)/CLOCKS_PER_SEC);
 	}
-	//cout<<index1<<endl;
+
+	t = clock() - t;
+	printf ("%f seconds.\n",((float)t)/CLOCKS_PER_SEC);
 }
 
 int Count_words(string c){
@@ -502,8 +512,8 @@ void Print_ans(){
 		rsize=5;
 	printf("output: %d\n",rsize);
 	for(int i=0;i<rsize;i++)
-		printf("%s\t%lld\n",s[real_ans[i]].c_str(),L[real_ans[i]]);	
+		printf("%s\t%lld\n",I[real_ans[i]].s.c_str(),I[real_ans[i]].L);	
 }
-bool cmp(int a,int b){
-	return L[a]>L[b];
+bool cmp(Input a,Input b){
+	return a.L>b.L;
 }

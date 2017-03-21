@@ -44,6 +44,7 @@ string fq;
 
 int main(int argc, char** argv){
 	Get_data(argv[1]);
+	//cout<<nv.size()<<endl;
 	string Q;
 	while(getline(cin,Q)){
 		initialize();
@@ -59,6 +60,7 @@ int main(int argc, char** argv){
 void Query_expand(string Q){
 	q.push_back(Q);
 	Find_fq(Q);
+	//cout<<fq<<endl;
 	int size;
 	size=q.size();
 	for(int i=0,j=0;i<size;i++){
@@ -114,6 +116,7 @@ void Find_in_database(string dq){
 		if(f!=0)
 			cnt_words++;
 	}
+	clock_t tnow,tafter;
 
 	while(1){
 		int min_nvindex_num=0;
@@ -136,6 +139,11 @@ void Find_in_database(string dq){
 			break;
 		else
 			nindex[ min_nvindex_num ] += 1;
+		
+		tafter = clock() - tnow;
+		
+		if(tafter>5)
+			break;
 	}
 	
 }
@@ -195,7 +203,6 @@ void Find_fq(string Q){
 			if(right==nowstr.length()-1){
 				str=nowstr;
 				replace(str,merge,"");
-				if(left-1>=0)
 				str.erase(str.begin()+left-1);
 				fq=str;					
 			}
